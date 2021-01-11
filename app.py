@@ -99,8 +99,9 @@ def inject_user():
 
 
 @app.errorhandler(404)
-def page_not_found(e):  # 接受异常对象
-    return render_template("404.html")
+def page_not_found(e):  # 接受异常对象作为参数
+    user = User.query.first()
+    return render_template("404.html", user=user), 404
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -113,12 +114,12 @@ def index():
         year = request.form.get("year")
         # 验证数据
         if not title or not year or len(year) != 4 or len(title) > 60:
-            flash("输入错误，年份必须完整，题目不能超过60个字符")
+            flash("Invalid input.")
             return redirect(url_for("index"))
         movie = Movie(title=title, year=year)
         db.session.add(movie)
         db.session.commit()
-        flash("创建成功")
+        flash("Item created.")
         return redirect(url_for("index"))
 
     movies = Movie.query.all()
@@ -135,13 +136,13 @@ def edit(movie_id):
         year = request.form["year"]
 
         if not title or not year or len(year) != 4 or len(title) > 60:
-            flash("输入错误，年份必须完整，题目不能超过60个字符")
+            flash("Invalid input.")
             return redirect(url_for("edit", movie_id=movie_id))  # 重定向回对应的编辑页面
 
         movie.title = title  # 更新标题
         movie.year = year  # 更新年份
         db.session.commit()  # 提交数据库会话
-        flash("更新成功")
+        flash("Item updated.")
         return redirect(url_for("index"))  # 重定向回主页
 
     return render_template("edit.html", movie=movie)  # 传入被编辑的电影记录
@@ -153,7 +154,7 @@ def delete(movie_id):
     movie = Movie.query.get_or_404(movie_id)
     db.session.delete(movie)
     db.session.commit()
-    flash("删除成功")
+    flash("Item deleted.")
     return redirect(url_for("index"))
 
 
@@ -208,7 +209,7 @@ def login():
 
 
 @app.route("/logout")
-@login_required  # 用于视图保护，后面会详细介绍
+@login_required
 def logout():
     logout_user()  # 登出用户
     flash("Goodbye.")
